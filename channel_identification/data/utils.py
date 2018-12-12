@@ -11,31 +11,30 @@ def get_num_frames(filepath):
         ret, frame = cap.read()
         if ret == True:
             count = count + 1
-        else: 
+        else:
             break
     return count
 
 def get_frames(filepath):
     cap = cv2.VideoCapture(filepath)
     print ("Reading file: ", filepath)
-    
+    window_length = 100
+    num_frames = 10
     output_frames = []
-    num_frames = get_num_frames(filepath)
     print("Number of frames = ", num_frames)
-    
-    frame_index  = np.linspace(0, num_frames, num=100)
-    frame_index = frame_index.astype(int)
+    # num_frames = get_num_frames(filepath)
+    # frame_index  = np.linspace(0, num_frames, num=100)
+    # frame_index = frame_index.astype(int)
     count = 0
-    while(cap.isOpened() == True):
+    
+    for i in range(num_frames):
         ret, frame = cap.read()
-        if ret == True:
-            count = count + 1
-            if count in frame_index:
-                # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                output_frames.append(frame)
-
+        if ret == True:            
+            # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            output_frames.append(frame)
         else: 
             break
+
     return output_frames
 
 

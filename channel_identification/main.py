@@ -6,10 +6,10 @@ import utils
 import imutils
 import params
 import matplotlib.pyplot as plt
-video_filepath = params.data_dir + '/test_data/' + 'videos/' + 'test.mp4'
+video_filepath = params.data_dir + '/test_data/' + 'videos/' + 'nat_geo.mpg'
 frames = utils.get_frames(video_filepath)
 files, templates =  utils.get_templates(params.icon_dir)
-
+import pdb; pdb.set_trace()
 num_detected = []
 
 methods = ['cv2.TM_CCOEFF', 'cv2.TM_CCOEFF_NORMED', 'cv2.TM_CCORR',
@@ -37,7 +37,6 @@ def solver(img, template):
     # plt.title('Matching Result'), plt.xticks([]), plt.yticks([])
     # plt.subplot(122),plt.imshow(img,cmap = 'gray')
     # plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
-    
 
 max_val = np.zeros((len(templates), len(frames), 3))
 image_count = 0
@@ -62,7 +61,7 @@ for j in range(3):
         plt.plot(max_val[i, :, j],  label=files[i])
         plt.legend(files)    
 
-plt.show()    
+plt.show()
 
 
 # for image in frames:
