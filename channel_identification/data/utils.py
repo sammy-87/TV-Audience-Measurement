@@ -27,9 +27,14 @@ def get_frames(filepath):
     # frame_index = frame_index.astype(int)
     count = 0
     
+
     for i in range(num_frames):
         ret, frame = cap.read()
-        if ret == True:            
+        
+        if np.sum(frame) == 0:
+            continue
+        
+        if ret == True:
             # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             output_frames.append(frame)
         else: 
@@ -40,12 +45,19 @@ def get_frames(filepath):
 
 def get_templates(icon_dir):
 
-    files = os.listdir(icon_dir) 
+    dummy_files = os.listdir(icon_dir) 
+    
+    files = []
+    for i in range(len(dummy_files)):
+        if dummy_files[i].split('.')[-1] == 'png':
+            files.append(dummy_files[i])
+        if dummy_files[i].split('.')[-1] == 'jpg':
+            files.append(dummy_files[i])
+
     templates = []
     for file in files:
-        if file.split('.')[-1] != '.png' or '.jpg':
-            template = cv2.imread(icon_dir + '/' + file)
-            # template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
-            # template = cv2.Canny(template, 50, 200)
-            templates.append(template)        
+        template = cv2.imread(icon_dir + '/' + file)
+        template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
+        templates.append(template) 
+
     return files, templates
