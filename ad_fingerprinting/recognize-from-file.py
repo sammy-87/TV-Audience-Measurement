@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
   seconds = 5
 
-  file_class = FileReader('mp3/The-Lights-Galaxia--While-She-Sleeps.mp3')
+  file_class = FileReader('mp3/airtel.mp3')
   file_dict = file_class.parse_audio()
   rate = file_dict['Fs']
   data = file_dict['channels']
