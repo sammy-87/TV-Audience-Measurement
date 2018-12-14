@@ -11,8 +11,8 @@ data = pd.read_csv('ad_audio.csv')
 
 audio_files = data['Video'].values
 ad_names = data['Ad-name'].values
-start_time = data['Start_time'].values
-end_time = data['End_time'].values
+start_times = data['Start_time'].values*100
+end_times = data['End_time'].values*100
 if not os.path.exists('../mp3'):
     os.makedirs('../mp3')
 
@@ -25,9 +25,9 @@ for i in range(len(audio_files)):
 
 	
 	
-	start_time = int(start_time[i]*sample_rate)
-	end_time = int(end_time[i]*sample_rate)
-	import pdb; pdb.set_trace()
+	start_time = int(start_times[i]*sample_rate)
+	end_time = int(end_times[i]*sample_rate)
+	
 
 	audio_segment = y[start_time:end_time]
 	ad_filepath = '../mp3/' + ad_names[i] + '.mp3'
