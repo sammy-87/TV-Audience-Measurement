@@ -15,9 +15,6 @@ from libs.visualiser_plot import VisualiserPlot as visual_plot
 from libs.db_sqlite import SqliteDatabase
 
 
-# song = None
-
-
 
 if __name__ == '__main__':
   config = get_config()
