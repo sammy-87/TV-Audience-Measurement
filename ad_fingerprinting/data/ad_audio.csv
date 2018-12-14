@@ -9,11 +9,11 @@ Video,Ad-name,Start_time,End_time
 4,Bajaj,0.08,0.27
 4,gillete,0.27,0.32
 7,vivo,0.41,1
-7,honda,1,1.21
-7,ultratech_cement,1.21,1.32
+7,honda,1,0.81
+7,ultratech_cement,0.81,0.92
 8,fogg,0,0.2
-14,trivago,1.41,2.12
-14,airtel,2.12,2.26
-14,housing_com,2.27,3.01
+14,trivago,1.01,1.32
+14,airtel,1.32,1.46
+14,housing_com,1.47,1.81
 15,mowgli,0,0.26
 16,pixel,0.02,0.37

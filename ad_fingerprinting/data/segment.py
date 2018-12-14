@@ -23,13 +23,13 @@ for i in range(len(audio_files)):
 	filepath = 'dataset_audio/' + str(audio_files[i]) + '.wav'
 	sample_rate, y  = read(filepath)
 
-	
-	
+
 	start_time = int(start_times[i]*sample_rate)
 	end_time = int(end_times[i]*sample_rate)
 	
 
 	audio_segment = y[start_time:end_time]
+	# print (audio_files[i], ad_names[i] , len(y), sample_rate, start_time, end_time, len(audio_segment))	
 	ad_filepath = '../mp3/' + ad_names[i] + '.mp3'
 	write(ad_filepath, sample_rate, audio_segment)
 
