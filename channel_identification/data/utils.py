@@ -15,6 +15,21 @@ def get_num_frames(filepath):
             break
     return count
 
+
+def get_corners(img):
+    corners = []
+    length = 300
+    height = img.shape[0]
+    width = img.shape[1]
+    corners.append(img[0:length, 0:length])
+    corners.append(img[height-length:height, 0:length])
+    corners.append(img[0:length, width-length:width])
+    corners.append(img[height-length:height, width-length:width])
+
+    return corners
+
+
+
 def get_frames(filepath):
     cap = cv2.VideoCapture(filepath)
     print ("Reading file: ", filepath)
@@ -30,13 +45,13 @@ def get_frames(filepath):
 
     for i in range(num_frames):
         ret, frame = cap.read()
-        
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         if np.sum(frame) == 0:
             continue
         
         if ret == True:
             # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            output_frames.append(frame)
+            output_frames.append(get_corners(frame))
         else: 
             break
 
@@ -58,6 +73,7 @@ def get_templates(icon_dir):
     for file in files:
         template = cv2.imread(icon_dir + '/' + file)
         template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
+        template = cv2.resize(template  , (100 , 100))
         templates.append(template) 
 
     return files, templates

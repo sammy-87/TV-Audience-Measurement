@@ -25,7 +25,7 @@ def test(x_test, y_test):
         print("Accuracy = ", 1 - np.sum(abs(prediction - y_test))/n_test_samples)
 
 if __name__ == "__main__":
-    input_file = 'combined_labels_Sheet1.csv'        # path to csv file
+    input_file = 'combined_labels_Sheet2.csv'        # path to csv file
     rows = [] 
     with open(input_file, 'r') as csvfile:
         csvreader = csv.reader(csvfile)
