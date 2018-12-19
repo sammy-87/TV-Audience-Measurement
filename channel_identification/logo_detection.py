@@ -4,8 +4,9 @@ from skimage import filters
 import matplotlib.pyplot as plt
 from fillholes import fillholes
 import pdb
+import os
 
-cap = cv2.VideoCapture('../data/test2.mp4')
+cap = cv2.VideoCapture('../data/test7.mpg')
 
 corners = []
 colorCorners = []
@@ -13,10 +14,14 @@ edgeImages = []
 avgEdgeImages = []
 hystImage = []
 prevAvgEdgeImages = [0,0,0,0]
-length = 150
+length = 200
 offset = 0
 eta_ref = 10
 count = 1
+area_sum = np.zeros(4)
+template_dir = '/Users/siriusA/Documents/MyProjects/TV-Audience-Measurement/data/logo-templates/'
+method = eval('cv2.TM_CCOEFF')
+mask_list = [np.zeros((length, length)), np.zeros((length, length)), np.zeros((length, length)), np.zeros((length, length))]
 
 def auto_canny(image, sigma=0.33):
     # compute the median of the single channel pixel intensities
@@ -37,7 +42,7 @@ while(True):
     colorCorners.append(colorFrame[h-offset-length:h-offset, offset:length+offset])
     colorCorners.append(colorFrame[h-offset-length:h-offset, w-offset-length:w-offset])
 
-    image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)       # 480 x 720
+    image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     kernel = np.ones((3,3),np.uint8)
     alpha = (count-1)/count if (count <= eta_ref) else (eta_ref-1)/eta_ref
     # alpha = 1-alpha
@@ -55,7 +60,7 @@ while(True):
         avgEdgeImages[i] = avgEdgeImages[i].astype(np.uint8)
 
         hyst_threshold, _ = cv2.threshold(avgEdgeImages[i], 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-        # hyst_threshold  = 200
+        # hyst_threshold = 200
         temp = filters.apply_hysteresis_threshold(avgEdgeImages[i], hyst_threshold, hyst_threshold)*255
         temp = temp.astype(np.uint8)
         hystImage.append(temp)
@@ -69,48 +74,79 @@ while(True):
             if(area > maxContourArea):
                 maxContourArea = area
                 maxContour = c
+        area_sum[i] += maxContourArea
         # print("Area of corner "+str(i), maxContourArea)
         # if (maxContourArea > finalMaxArea):
         #     finalMaxArea = maxContourArea
         #     finalMaxContour = maxContour
 
-        cv2.drawContours(colorCorners[i], maxContour, -1, (255, 255, 255), 5)
-        # nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(dilation, connectivity=4)
-        # sizes = stats[:, -1]
-        # max_label = 1
-        # max_size = sizes[0]
-        # for i in range(2, nb_components):
-        #     if sizes[i] > max_size:
-        #         max_label = i
-        #         max_size = sizes[i]
+        mask = np.zeros((length, length, 3), dtype="uint8")
 
-        # closing = cv2.morphologyEx(hystImage[i], cv2.MORPH_CLOSE, kernel)
-        # closing = closing.astype(np.uint8)
-        # holesFilled = fillholes(closing)
-        # opening = cv2.morphologyEx(holesFilled, cv2.MORPH_OPEN, kernel)
+        # draw white rectangles for each object's bounding box
+        (x, y, width, height) = cv2.boundingRect(maxContour)
+        cv2.rectangle(mask, (x, y), (x + width, y + height), (0, 255, 0), -1)
 
-        # # ret, labels = cv2.connectedComponents(opening)
-
-        # fig.add_subplot(2,2,i+1)
-        # plt.imshow(edgeImages[i], cmap='gray')
+        # mask_list[i] = mask_list[i] + (mask//255)
+        # apply mask to the original image
+        colorCorners[i] = cv2.bitwise_and(colorCorners[i], mask)
+        # cv2.drawContours(colorCorners[i], maxContour, -1, (255, 255, 255), 5)
         cv2.imshow('frame'+str(i), colorCorners[i])
-    # cv2.drawContours(frame, finalMaxContour, -1, (255, 255, 255), 5)
     cv2.imshow('color image', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
+    count = count + 1
+
+    max_res = 0
+    max_channel = None
+    if(count%150 == 0):
+        which_corner = np.argmax(area_sum)
+        which_corner = 1
+        if which_corner == 0:
+            corner_name = 'top-left'
+        elif which_corner == 1:
+            corner_name = 'top-right'
+        elif which_corner == 2:
+            corner_name = 'bottom-left'
+        else:
+            corner_name = 'bottom-right'
+        # print(which_corner)
+        # mask_list[which_corner] = mask_list[which_corner]/300.0
+        # myvar = mask_list[which_corner] > 0.50
+        # myvar = myvar.astype(np.uint8)*255
+        # print(np.sum(myvar))
+        # if cv2.waitKey(1) & 0xFF == ord('q'):
+        #     break
+        for filename in os.listdir(template_dir):
+            filepath = template_dir+filename
+            # print(filepath)
+            template = cv2.imread(filepath, 0)
+            template_height, template_width = template.shape
+            res = cv2.matchTemplate(corners[which_corner], template, method)
+            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+
+            if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
+                top_left = min_loc
+            else:
+                top_left = max_loc
+            bottom_right = (top_left[0] + template_height, top_left[1] + template_width)
+
+            # threshold = 1.0
+            # loc = np.where( res >= threshold)
+            # print(filename, np.max(res), np.min(res))
+            # cv2.rectangle(img, top_left, bottom_right, 255, 2)
+            if(np.max(res) > max_res):
+                max_res = np.max(res)
+                max_channel = filename
+        area_sum = np.zeros(4)
+        # mask_list = [np.zeros((length, length)), np.zeros((length, length)), np.zeros((length, length)), np.zeros((length, length))]
+        print("Channel Location :", corner_name, "Channel Name = ", max_channel.split('.')[0])
     corners = []
     colorCorners = []
     edgeImages = []
     prevAvgEdgeImages = avgEdgeImages
     avgEdgeImages = []
     hystImage = []
-    count = count + 1
-    # if(count > 300):
-    #     count = 1
-    # plt.show(block=False)
-    # plt.draw()
-    # plt.pause(1e-12)
 
 cap.release()
 cv2.destroyAllWindows()
