@@ -6,7 +6,8 @@ from fillholes import fillholes
 import pdb
 import os
 
-cap = cv2.VideoCapture('../data/test7.mpg')
+# cap = cv2.VideoCapture('../data/test2.mp4')
+cap = cv2.VideoCapture(1)
 
 corners = []
 colorCorners = []
@@ -14,14 +15,17 @@ edgeImages = []
 avgEdgeImages = []
 hystImage = []
 prevAvgEdgeImages = [0,0,0,0]
-length = 200
 offset = 0
 eta_ref = 10
 count = 1
 area_sum = np.zeros(4)
-template_dir = '/Users/siriusA/Documents/MyProjects/TV-Audience-Measurement/data/logo-templates/'
+template_dir1 = '/Users/siriusA/Documents/MyProjects/TV-Audience-Measurement/data/logo_template_1/'
+template_dir2 = '/Users/siriusA/Documents/MyProjects/TV-Audience-Measurement/data/logo_template_2/'
+template_dir3 = '/Users/siriusA/Documents/MyProjects/TV-Audience-Measurement/data/logo_template_3/'
 method = eval('cv2.TM_CCOEFF')
-mask_list = [np.zeros((length, length)), np.zeros((length, length)), np.zeros((length, length)), np.zeros((length, length))]
+big_count = 0
+template_dir = template_dir1
+# mask_list = [np.zeros((length, length)), np.zeros((length, length)), np.zeros((length, length)), np.zeros((length, length))]
 
 def auto_canny(image, sigma=0.33):
     # compute the median of the single channel pixel intensities
@@ -36,20 +40,22 @@ def auto_canny(image, sigma=0.33):
 while(True):
     ret, frame = cap.read()
     h, w = frame.shape[:2]
+    length_h = w//5
+    length_v = h//4
     colorFrame = frame
-    colorCorners.append(colorFrame[offset:length+offset, offset:length+offset])
-    colorCorners.append(colorFrame[offset:length+offset, w-offset-length:w-offset])
-    colorCorners.append(colorFrame[h-offset-length:h-offset, offset:length+offset])
-    colorCorners.append(colorFrame[h-offset-length:h-offset, w-offset-length:w-offset])
+    colorCorners.append(colorFrame[offset:length_v+offset, offset:length_h+offset])
+    colorCorners.append(colorFrame[offset:length_v+offset, w-offset-length_h:w-offset])
+    colorCorners.append(colorFrame[h-offset-length_v:h-offset, offset:length_h+offset])
+    colorCorners.append(colorFrame[h-offset-length_v:h-offset, w-offset-length_h:w-offset])
 
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     kernel = np.ones((3,3),np.uint8)
     alpha = (count-1)/count if (count <= eta_ref) else (eta_ref-1)/eta_ref
     # alpha = 1-alpha
-    corners.append(image[offset:length+offset, offset:length+offset])
-    corners.append(image[offset:length+offset, w-offset-length:w-offset])
-    corners.append(image[h-offset-length:h-offset, offset:length+offset])
-    corners.append(image[h-offset-length:h-offset, w-offset-length:w-offset])
+    corners.append(image[offset:length_v+offset, offset:length_h+offset])
+    corners.append(image[offset:length_v+offset, w-offset-length_h:w-offset])
+    corners.append(image[h-offset-length_v:h-offset, offset:length_h+offset])
+    corners.append(image[h-offset-length_v:h-offset, w-offset-length_h:w-offset])
 
     # finalMaxArea = 0
     # finalMaxContour = None
@@ -80,7 +86,7 @@ while(True):
         #     finalMaxArea = maxContourArea
         #     finalMaxContour = maxContour
 
-        mask = np.zeros((length, length, 3), dtype="uint8")
+        mask = np.zeros((length_v, length_h, 3), dtype="uint8")
 
         # draw white rectangles for each object's bounding box
         (x, y, width, height) = cv2.boundingRect(maxContour)
@@ -91,7 +97,7 @@ while(True):
         colorCorners[i] = cv2.bitwise_and(colorCorners[i], mask)
         # cv2.drawContours(colorCorners[i], maxContour, -1, (255, 255, 255), 5)
         cv2.imshow('frame'+str(i), colorCorners[i])
-    cv2.imshow('color image', frame)
+    # cv2.imshow('color image', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
@@ -99,27 +105,25 @@ while(True):
 
     max_res = 0
     max_channel = None
-    if(count%150 == 0):
+    if(count%300 == 0):
+        big_count += 1
         which_corner = np.argmax(area_sum)
         which_corner = 1
-        if which_corner == 0:
-            corner_name = 'top-left'
-        elif which_corner == 1:
-            corner_name = 'top-right'
-        elif which_corner == 2:
-            corner_name = 'bottom-left'
-        else:
-            corner_name = 'bottom-right'
-        # print(which_corner)
-        # mask_list[which_corner] = mask_list[which_corner]/300.0
-        # myvar = mask_list[which_corner] > 0.50
-        # myvar = myvar.astype(np.uint8)*255
-        # print(np.sum(myvar))
-        # if cv2.waitKey(1) & 0xFF == ord('q'):
-        #     break
+        # if which_corner == 0:
+        #     corner_name = 'top-left'
+        # elif which_corner == 1:
+        #     corner_name = 'top-right'
+        # elif which_corner == 2:
+        #     corner_name = 'bottom-left'
+        # else:
+        #     corner_name = 'bottom-right'
+        # # mask_list[which_corner] = mask_list[which_corner]/300.0
+        # # myvar = mask_list[which_corner] > 0.50
+        # # myvar = myvar.astype(np.uint8)*255
         for filename in os.listdir(template_dir):
+            if(filename == '.DS_Store'):
+                continue
             filepath = template_dir+filename
-            # print(filepath)
             template = cv2.imread(filepath, 0)
             template_height, template_width = template.shape
             res = cv2.matchTemplate(corners[which_corner], template, method)
@@ -135,12 +139,19 @@ while(True):
             # loc = np.where( res >= threshold)
             # print(filename, np.max(res), np.min(res))
             # cv2.rectangle(img, top_left, bottom_right, 255, 2)
-            if(np.max(res) > max_res):
+            if(max_val > max_res):
                 max_res = np.max(res)
                 max_channel = filename
         area_sum = np.zeros(4)
         # mask_list = [np.zeros((length, length)), np.zeros((length, length)), np.zeros((length, length)), np.zeros((length, length))]
-        print("Channel Location :", corner_name, "Channel Name = ", max_channel.split('.')[0])
+        print("Channel Name = ", max_channel.split('.')[0])
+        if(big_count == 6):
+            template_dir = template_dir2
+        elif(big_count == 10):
+            template_dir = template_dir3
+        elif(big_count >= 13):
+            break
+
     corners = []
     colorCorners = []
     edgeImages = []

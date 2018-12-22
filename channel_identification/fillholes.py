@@ -7,8 +7,8 @@ def fillholes(im_in):
 	# Set values equal to or above 220 to 0.
 	# Set values below 220 to 255.
 	 
-	th, im_th = cv2.threshold(im_in, 220, 255, cv2.THRESH_BINARY_INV)
-	 
+	th, im_th = cv2.threshold(im_in, 220, 255, cv2.THRESH_BINARY)
+	
 	# Copy the thresholded image.
 	im_floodfill = im_th.copy()
 	 
