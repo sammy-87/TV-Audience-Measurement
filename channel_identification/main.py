@@ -7,11 +7,50 @@ import imutils
 import params
 import matplotlib.pyplot as plt
 video_filepath = params.data_dir + '/test_data/' + 'videos/' + 'test.mp4'
-frames = utils.get_frames(video_filepath)
+cap = cv2.VideoCapture(video_filepath)
+
+count = 0
+
+images = []
+
+while(True):
+    ret, frame = cap.read()
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    if np.sum(frame) == 0:
+        continue
+    
+    else:
+        images.append(frame)
+
+        count = count + 1
+        if count == 10:
+            break
+    k = cv2.waitKey(30) & 0xff
+    if k == 27:
+        break
+
+
+cap.release()
+cv2.destroyAllWindows()
+
+def get_corners(img):
+    corners = []
+    length = 300
+    height = img.shape[0]
+    width = img.shape[1]
+    corners.append(img[0:length, 0:length])
+    corners.append(img[height-length:height, 0:length])
+    corners.append(img[0:length, width-length:width])
+    corners.append(img[height-length:height, width-length:width])
+
+    return corners
+frames = []
+
+for image in images:
+    frames.append(get_corners(image))
+
 files, templates =  utils.get_templates(params.icon_dir)
-import pdb; pdb.set_trace()
-# files = np.sort(files)
-# templates = np.sort(templates)
+
 
 num_detected = []
 
@@ -24,7 +63,8 @@ def solver(img, template):
     method = eval(methods[2])  # cv2.TM_SQDIFF
     w, h = template.shape[::-1]
     # Apply template Matching
-    # import pdb; pdb.set_trace()
+    
+    # import pdb; pdb.set_trace()    
     res = cv2.matchTemplate(img, template, method)
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
     # If the method is TM_SQDIFF or TM_SQDIFF_NORMED, take minimum
@@ -45,28 +85,22 @@ def solver(img, template):
 
 def non_causal():
 
-    max_val = np.zeros((len(templates), len(frames), 3))
-    image_count = 0
-
-    for image in frames:
+    max_val = []
+    
+    for corners in frames:
         print(" Searching for logo in video ", video_filepath)
         template_count = 0
         
         for template in templates:
-            print("Logo: ", files[template_count])
-            
-            for channel_iter in range(image.shape[2]):
-                max_val[template_count, image_count, channel_iter] = solver(image[:, :, channel_iter], template[:, :, channel_iter])
+            val = []
+            for corner in corners:
+                if np.sum(corner) == 0:
+                    continue
+                val.append(solver(corner, template))
             template_count = template_count + 1
-        image_count = image_count + 1
+            max_val.append(max(val))
+        import pdb; pdb.set_trace()    
 
-    for j in range(3):
-        plt.figure()
-        for i in range(len(templates)):
-            plt.plot(max_val[i, :, j],  label=files[i])
-            plt.legend(files)    
-
-    plt.show()
 
 
 # def corner_patches(image):
